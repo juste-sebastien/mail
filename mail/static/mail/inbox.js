@@ -36,8 +36,13 @@ function load_mailbox(mailbox) {
   document.querySelector('#emails-view').style.display = 'block';
   document.querySelector('#compose-view').style.display = 'none';
 
+  mailbox_name = mailbox.charAt(0).toUpperCase() + mailbox.slice(1);
+ 
   // Show the mailbox name
-  document.querySelector('#emails-view').innerHTML = `<h3>${mailbox.charAt(0).toUpperCase() + mailbox.slice(1)}</h3>`;
+  document.querySelector('#emails-view').innerHTML = `<h3>${mailbox_name}</h3>`;
+
+  // Call the corresponding function to load mail
+  get_mailbox_content(mailbox_name.toLowerCase());
 }
 
 function send_email() {
@@ -56,4 +61,52 @@ function send_email() {
   .catch(error => {
     console.log('Error:', error);
   });
+}
+
+function get_mailbox_content(name) {
+  fetch(`/emails/${name}`)
+  .then(response => response.json())
+  .then(emails => {
+      console.log(emails);
+      // For each email in the array
+      emails.forEach(email => {
+        const element = add_html_to_element(email);
+        document.querySelector('#emails-view').append(element);
+      });
+  })
+  // Catch the error if one occurs
+  .catch(error => {
+    console.log('Error:', error);
+  });
+
+}
+
+function add_html_to_element(element) {
+  // Create link
+  const element_html = document.createElement('a');
+  element_html.setAttribute('href', '#');
+  //Create container
+  const div = document.createElement('div'); 
+  // Create title
+  const title = document.createElement('h6');
+  title.textContent = `${element.sender}`;
+  div.appendChild(title);
+  // Create and add subject
+  const subject = document.createElement('p');
+  subject.textContent = `${element.subject}`;
+  div.appendChild(subject);
+  // Create and add timestamp
+  const timestamp = document.createElement('p');
+  timestamp.textContent = `${element.timestamp}`;
+  div.appendChild(timestamp);
+
+  // Add div to a tag and add eventListener
+  element_html.appendChild(div);
+  element_html.addEventListener('click', view_mail(element));
+  console.log(element_html)
+  return element_html
+}
+
+function view_mail(element) {
+  // todo
 }
