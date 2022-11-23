@@ -5,6 +5,8 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelector('#sent').addEventListener('click', () => load_mailbox('sent'));
   document.querySelector('#archived').addEventListener('click', () => load_mailbox('archive'));
   document.querySelector('#compose').addEventListener('click', compose_email);
+  
+  // Listen compose-form submitting
   document.querySelector('#compose-form').addEventListener('submit', (event) => {
     event.preventDefault();
     send_email();
@@ -20,7 +22,6 @@ function compose_email() {
 
   // Show compose view and hide other views
   document.querySelector('#emails-view').style.display = 'none';
-  console.log('email-view done');
   document.querySelector('#compose-view').style.display = 'block';
 
   // Clear out composition fields
@@ -43,14 +44,16 @@ function send_email() {
   fetch('/emails', {
     method: 'POST',
     body: JSON.stringify({
+        // Get email elements from request
         recipients: document.querySelector('#compose-recipients').value,
         subject: document.querySelector('#compose-subject').value,
         body: document.querySelector('#compose-body').value
     })
   })
+  // Parse response in to JSON
   .then(response => response.json())
-  .then(result => {
-      // Print result
-      console.log(result);
+  // Catch the error if one occurs
+  .catch(error => {
+    console.log('Error:', error);
   });
 }
