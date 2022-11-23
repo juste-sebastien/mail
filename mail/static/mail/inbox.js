@@ -18,6 +18,9 @@ document.addEventListener('DOMContentLoaded', function() {
   load_mailbox('inbox');
 });
 
+/**
+ * Display compose-view and undisplay emails-view
+ */
 function compose_email() {
 
   // Show compose view and hide other views
@@ -30,6 +33,10 @@ function compose_email() {
   document.querySelector('#compose-body').value = '';
 }
 
+/**
+ * Load a specific mailbox with it name
+ * @param {string} mailbox 
+ */
 function load_mailbox(mailbox) {
   
   // Show the mailbox and hide other views
@@ -45,6 +52,9 @@ function load_mailbox(mailbox) {
   get_mailbox_content(mailbox_name.toLowerCase());
 }
 
+/**
+ * Use Django API to get email
+ */
 function send_email() {
   fetch('/emails', {
     method: 'POST',
@@ -63,7 +73,13 @@ function send_email() {
   });
 }
 
+/**
+ * Take a specific mailbox to render emails content
+ * in it
+ * @param {string} name 
+ */
 function get_mailbox_content(name) {
+  // Get emails in a specific mailbox into an array
   fetch(`/emails/${name}`)
   .then(response => response.json())
   .then(emails => {
@@ -71,6 +87,8 @@ function get_mailbox_content(name) {
       // For each email in the array
       emails.forEach(email => {
         const element = add_html_to_element(email);
+        // Add eventListener
+        element.addEventListener('click', view_mail(email));
         document.querySelector('#emails-view').append(element);
       });
   })
@@ -81,32 +99,47 @@ function get_mailbox_content(name) {
 
 }
 
+/**
+ * Take an email from a list and generate html to id
+ * @param {object} element
+ * @return {object} button
+ */
 function add_html_to_element(element) {
-  // Create link
-  const element_html = document.createElement('a');
-  element_html.setAttribute('href', '#');
   //Create container
-  const div = document.createElement('div'); 
+  const button = document.createElement('button'); 
   // Create title
   const title = document.createElement('h6');
   title.textContent = `${element.sender}`;
-  div.appendChild(title);
+  button.appendChild(title);
   // Create and add subject
   const subject = document.createElement('p');
   subject.textContent = `${element.subject}`;
-  div.appendChild(subject);
+  button.appendChild(subject);
   // Create and add timestamp
   const timestamp = document.createElement('p');
   timestamp.textContent = `${element.timestamp}`;
-  div.appendChild(timestamp);
+  button.appendChild(timestamp);
 
-  // Add div to a tag and add eventListener
-  element_html.appendChild(div);
-  element_html.addEventListener('click', view_mail(element));
-  console.log(element_html)
-  return element_html
+  return button
 }
 
+/**
+ * Get a specific email to render his page
+ * @param {*} element 
+ */
 function view_mail(element) {
-  // todo
+  // Get specific email
+  fetch(`/emails/${element.id}`)
+  .then(response => response.json())
+  .then(email => {
+      // Print email
+      console.log(email);
+
+      // ... do something else with email ...
+  })
+  // Catch potential error
+  .catch(error => {
+    console.log('Error: ', error);
+  });
+
 }
