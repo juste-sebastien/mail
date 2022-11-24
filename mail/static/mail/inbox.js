@@ -31,6 +31,18 @@ function compose_email() {
 }
 
 
+function reply(email) {
+  // Get compose form
+  compose_email();
+
+  // Populate form with mail content
+  document.querySelector('#compose-recipients').value = email.sender;
+  document.querySelector('#compose-subject').value = `Re: ${email.subject}`;
+  document.querySelector('#compose-body').value = `\n\n\nOn ${email.timestamp} ${email.sender} wrote: \n\n ${email.body}`;
+  
+}
+
+
 /**
  * Load a specific mailbox with it name
  * @param {string} mailbox 
@@ -184,13 +196,18 @@ function displayPanel(email, mailbox) {
   let panelControl = document.querySelector('#email-panel');
   panelControl.innerHTML = '';
   
+  // Display Reply Button
+  let replyButton = document.createElement('button');
+  replyButton.textContent = 'Reply';
+  replyButton.addEventListener('click', function() {
+    reply(email);
+  });
+
   // Display Archive Button and Read Button
   if (mailbox != 'sent') {
     let archiveButton = document.createElement('button');
-    archiveButton.name = 'archive';
     archiveButton.textContent = email.archived ? 'Unarchive' : 'Archive';
     let readButton = document.createElement('button');
-    readButton.name = 'read';
     readButton.textContent = email.read ? 'Mark as Unread' : 'Mark as Read';
     archiveButton.addEventListener('click', function () {
       // Send new status on db
@@ -215,6 +232,8 @@ function displayPanel(email, mailbox) {
       // Redirect to inbox
       .then(response => load_mailbox('inbox'));
     });
+
+    panelControl.appendChild(replyButton);
     panelControl.appendChild(archiveButton);
     panelControl.appendChild(readButton);
   }
