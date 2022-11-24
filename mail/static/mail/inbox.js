@@ -30,7 +30,10 @@ function compose_email() {
   document.querySelector('#compose-body').value = '';
 }
 
-
+/**
+ * Get compose form and populate fields with received mail content
+ * @param {*} email 
+ */
 function reply(email) {
   // Get compose form
   compose_email();
