@@ -100,6 +100,8 @@ function send_email(event) {
  */
 function get_mailbox_content(name) {
   // Get emails in a specific mailbox into an array
+  let container = document.querySelector('#emails-view');
+  container.innerHTML = '';
   fetch(`/emails/${name}`)
   .then(response => response.json())
   .then(emails => {
@@ -108,7 +110,7 @@ function get_mailbox_content(name) {
         const element = add_html_to_element(email);
         element.style.cursor = 'pointer';
         element.addEventListener('click', () => view_mail(email.id, name));
-        document.querySelector('#emails-view').append(element);
+        container.append(element);
       });
   })
   // Catch the error if one occurs
@@ -126,18 +128,22 @@ function get_mailbox_content(name) {
  */
 function add_html_to_element(element) {
   //Create container
-  const div = document.createElement('div'); 
+  const div = document.createElement('div');
+  div.className = element.read ? 'd-flex align-items-center mb-2 bg-light rounded border border-secondary' : 'd-flex align-items-center mb-2 bg-primary rounded border border-primary';
   // Create title
   const title = document.createElement('h6');
   title.textContent = `${element.sender}`;
+  title.className = 'p-2';
   div.appendChild(title);
   // Create and add subject
   const subject = document.createElement('p');
   subject.textContent = `${element.subject}`;
+  subject.className = 'ms-auto p-2';
   div.appendChild(subject);
   // Create and add timestamp
   const timestamp = document.createElement('p');
   timestamp.textContent = `${element.timestamp}`;
+  timestamp.className = 'p-2';
   div.appendChild(timestamp);
 
   return div
@@ -160,8 +166,8 @@ function view_mail(id, mailbox) {
       document.querySelector('#compose-view').style.display = 'none';
       document.querySelector('#email-view').style.display = 'block'; 
       
-      // Display email and mark it as read
-      email.read = true;
+      // Display email
+      markAsRead(email, true);
       displayEmail(email, mailbox);
       
   })
@@ -179,11 +185,11 @@ function view_mail(id, mailbox) {
  * @param {string} mailbox 
  */
 function displayEmail(email, mailbox) {
-  document.querySelector('#email-sender').innerHTML = `<em>From:</em> ${email.sender}`;
-  document.querySelector('#email-recipients').innerHTML = `<em>To:</em> ${email.recipients}`;
-  document.querySelector('#email-subject').innerHTML = `<em>Subject:</em> ${email.subject}`;
+  document.querySelector('#email-sender').innerHTML = `<em><b>From:</b></em> ${email.sender}`;
+  document.querySelector('#email-recipients').innerHTML = `<em><b>To:</b></em> ${email.recipients}`;
+  document.querySelector('#email-subject').innerHTML = `<em><b>Subject:</b></em> ${email.subject}`;
   document.querySelector('#email-timestamp').innerHTML = `${email.timestamp}`;
-  document.querySelector('#email-view').appendChild(displayPanel(email, mailbox));
+  document.querySelector('#email-panel').replaceWith(displayPanel(email, mailbox));
   document.querySelector('#email-body').innerHTML = `${email.body}`;
 }
 
@@ -194,23 +200,21 @@ function displayEmail(email, mailbox) {
  * @param {string} mailbox
  */
 function displayPanel(email, mailbox) {
-  
   // Get panel control and remove his children
   let panelControl = document.querySelector('#email-panel');
-  panelControl.innerHTML = '';
   
-  // Display Reply Button
-  let replyButton = document.createElement('button');
-  replyButton.textContent = 'Reply';
+  // Add Event on Reply Button
+  let replyButton = document.querySelector('#email-panel-reply');
   replyButton.addEventListener('click', function() {
     reply(email);
   });
 
   // Display Archive Button and Read Button
   if (mailbox != 'sent') {
-    let archiveButton = document.createElement('button');
+    panelControl.className = 'btn-group';
+    let archiveButton = document.querySelector('#email-panel-archive');
     archiveButton.textContent = email.archived ? 'Unarchive' : 'Archive';
-    let readButton = document.createElement('button');
+    let readButton = document.querySelector('#email-panel-read');
     readButton.textContent = email.read ? 'Mark as Unread' : 'Mark as Read';
     archiveButton.addEventListener('click', function () {
       // Send new status on db
@@ -226,21 +230,31 @@ function displayPanel(email, mailbox) {
     });
     readButton.addEventListener('click', function() {
       // Send new status on db
-      fetch(`/emails/${email.id}` , {
-        method: 'PUT',
-        body: JSON.stringify({
-            read: !email.read
-        })
-      })
+      statement = email.read ? false : true;
+      markAsRead(email, statement);
       // Redirect to inbox
-      .then(response => load_mailbox('inbox'));
+      load_mailbox('inbox');
     });
 
     panelControl.appendChild(replyButton);
     panelControl.appendChild(archiveButton);
     panelControl.appendChild(readButton);
+  } else {
+    panelControl.className = 'd-none';
   }
 
   return panelControl
   
+}
+
+function markAsRead(email, statement = false) {
+  fetch(`/emails/${email.id}` , {
+    method: 'PUT',
+    body: JSON.stringify({
+        read: statement
+    })
+  })
+  .catch(error => {
+    console.log('Error: ', error);
+  });
 }
