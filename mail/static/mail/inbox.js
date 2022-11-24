@@ -92,7 +92,7 @@ function get_mailbox_content(name) {
       emails.forEach(email => {
         const element = add_html_to_element(email);
         element.style.cursor = 'pointer';
-        element.addEventListener('click', () => view_mail(email.id));
+        element.addEventListener('click', () => view_mail(email.id, name));
         document.querySelector('#emails-view').append(element);
       });
   })
@@ -131,9 +131,10 @@ function add_html_to_element(element) {
 
 /**
  * Get a specific email to render his page
- * @param {*} element 
+ * @param {int} id 
+ * @param {string} mailbox
  */
-function view_mail(id) {
+function view_mail(id, mailbox) {
 
   // Get specific email
   fetch(`/emails/${id}`)
@@ -144,9 +145,9 @@ function view_mail(id) {
       document.querySelector('#compose-view').style.display = 'none';
       document.querySelector('#email-view').style.display = 'block'; 
       
-      // Display email and mark as read
-      markAsRead(email);
-      displayEmail(email);
+      // Display email and mark it as read
+      email.read = true;
+      displayEmail(email, mailbox);
       
   })
   // Catch potential error
@@ -159,27 +160,65 @@ function view_mail(id) {
 
 /**
  * Complete email fields in inbox.html
- * @param {*} email 
+ * @param {*} email
+ * @param {string} mailbox 
  */
-function displayEmail(email) {
+function displayEmail(email, mailbox) {
   document.querySelector('#email-sender').innerHTML = `<em>From:</em> ${email.sender}`;
   document.querySelector('#email-recipients').innerHTML = `<em>To:</em> ${email.recipients}`;
   document.querySelector('#email-subject').innerHTML = `<em>Subject:</em> ${email.subject}`;
   document.querySelector('#email-timestamp').innerHTML = `${email.timestamp}`;
+  document.querySelector('#email-view').appendChild(displayPanel(email, mailbox));
   document.querySelector('#email-body').innerHTML = `${email.body}`;
 }
 
 
 /**
- * Mark an email to read statement
- * @param {*} email
+ * Display control panel of an email
+ * @param {*} email 
+ * @param {string} mailbox
  */
-function markAsRead(email) {
-  fetch(`/emails/${email.id}` , {
-    method: 'PUT',
-    body: JSON.stringify({
-        read: true
-    })
-  });
+function displayPanel(email, mailbox) {
+  
+  // Get panel control and remove his children
+  let panelControl = document.querySelector('#email-panel');
+  panelControl.innerHTML = '';
+  
+  // Display Archive Button and Read Button
+  if (mailbox != 'sent') {
+    let archiveButton = document.createElement('button');
+    archiveButton.name = 'archive';
+    archiveButton.textContent = email.archived ? 'Unarchive' : 'Archive';
+    let readButton = document.createElement('button');
+    readButton.name = 'read';
+    readButton.textContent = email.read ? 'Mark as Unread' : 'Mark as Read';
+    archiveButton.addEventListener('click', function () {
+      // Send new status on db
+      fetch(`/emails/${email.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ 
+          archived : !email.archived,
+          read: false 
+        })
+      })
+      // Redirect to inbox
+      .then(response => load_mailbox('inbox'));
+    });
+    readButton.addEventListener('click', function() {
+      // Send new status on db
+      fetch(`/emails/${email.id}` , {
+        method: 'PUT',
+        body: JSON.stringify({
+            read: !email.read
+        })
+      })
+      // Redirect to inbox
+      .then(response => load_mailbox('inbox'));
+    });
+    panelControl.appendChild(archiveButton);
+    panelControl.appendChild(readButton);
+  }
+
+  return panelControl
   
 }
