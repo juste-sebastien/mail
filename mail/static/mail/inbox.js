@@ -97,7 +97,7 @@ function compose_email() {
         // Create archive button and add it to control panel
         const archiveButton = document.createElement('button');
         archiveButton.className = 'btn btn-sm btn-outline-primary';
-        archiveButton.innerHTML = !email['archived'] ? 'Archive' : 'Unarchive';
+        archiveButton.innerHTML = !email.archived ? 'Archive' : 'Unarchive';
         archiveButton.addEventListener('click', function() {
           fetch(`/emails/${email.id}`, {
             method: 'PUT',
@@ -113,7 +113,7 @@ function compose_email() {
         // Create read button and add it to control panel
         readButton = document.createElement('button');
         readButton.className = 'btn btn-sm btn-outline-primary';
-        readButton.innerHTML = "Mark as Unread"
+        readButton.innerHTML = email.read ? "Mark as Unread" : "Mark as Read";
         readButton.addEventListener('click', function() {
           fetch(`/emails/${email.id}`, {
             method: 'PUT',
